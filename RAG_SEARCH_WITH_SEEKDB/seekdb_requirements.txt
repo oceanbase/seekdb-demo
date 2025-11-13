@@ -1,0 +1,5 @@
+openai
+pyseekdb
+streamlit
+python-dotenv
+tqdm
