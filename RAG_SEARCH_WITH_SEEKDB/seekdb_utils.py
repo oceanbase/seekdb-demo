@@ -23,9 +23,6 @@ def get_collection(client, collection_name: str = "embeddings",
         print(f"Collection '{collection_name}' already exists, deleting old data...")
         client.delete_collection(collection_name)
     
-    if not client.has_collection(collection_name):
-        print(f"Creating new collection '{collection_name}' with dimension {embedding_dim}...")
-    
     config = HNSWConfiguration(dimension=embedding_dim, distance='l2')
     collection = client.get_or_create_collection(
         name=collection_name,
@@ -40,7 +37,7 @@ def get_collection(client, collection_name: str = "embeddings",
 def insert_embeddings(collection, data: List[Dict[str, Any]]):
     """Insert embeddings data into collection."""
     try:
-        collection.upsert(
+        collection.add(
             ids=[f"{item['source_file']}_{item.get('chunk_index', 0)}" for item in data],
             documents=[item['text'] for item in data],
             embeddings=[item['embedding'] for item in data],

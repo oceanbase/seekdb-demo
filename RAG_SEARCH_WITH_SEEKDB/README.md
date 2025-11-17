@@ -13,7 +13,7 @@
 
 ```bash
 git clone https://github.com/oceanbase/seekdb-demo.git
-cd seekdb_demo/RAG_SEARCH_WITH_SEEKD
+cd seekdb-demo/RAG_SEARCH_WITH_SEEKDB
 ```
 
 ### 2. 设置环境
@@ -36,7 +36,7 @@ cp .env.example .env
 
 以下使用通义千问作为示例：
 
-```
+```env
 OPENAI_API_KEY=sk-your-dashscope-key
 OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
 EMBEDDING_MODEL=text-embedding-v1
@@ -58,14 +58,18 @@ TABLE_NAME=embeddings
 
 ### 3. 准备数据
 
-我们使用 SeekDB 文档 作为示例，您也可以使用自己的 Markdown 文档。
+我们使用 SeekDB 文档作为示例，您也可以使用自己的 Markdown 文档。
+
+```bash
+mkdir -p seekdb_docs && curl -o seekdb_docs/pyseekdb-sdk.md https://raw.githubusercontent.com/oceanbase/seekdb/develop/docs/user-guide/en/pyseekdb-sdk.md
+```
 
 **导入数据**
 
 运行数据导入脚本：
 
 ```bash
-python seekdb_insert.py path/to/your_docs_directory
+python seekdb_insert.py seekdb_docs
 ```
 
 **说明**
