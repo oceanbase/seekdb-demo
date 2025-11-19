@@ -2,11 +2,10 @@ import os
 import streamlit as st
 from dotenv import load_dotenv
 
-from encoder import emb_text, get_embedding_client
+from pyseekdb import DefaultEmbeddingFunction
 from seekdb_utils import (
     get_seekdb_client, 
     get_collection, 
-    search_similar_embeddings, 
     get_database_stats
 )
 from llm import get_llm_answer, get_llm_client
@@ -29,26 +28,24 @@ COLLECTION_NAME = os.getenv("COLLECTION_NAME") or os.getenv("TABLE_NAME", "embed
 @st.cache_resource
 def init_clients():
     """Initialize and cache all clients."""
-    encoder = get_embedding_client()
-    llm = get_llm_client()
+    embedding_function = DefaultEmbeddingFunction()
     seekdb_client = get_seekdb_client(db_dir=DB_DIR, db_name=DB_NAME)
-    
-    # Detect embedding dimension
-    embedding_dim = len(emb_text(encoder, "test"))
     
     collection = get_collection(
         seekdb_client,
         collection_name=COLLECTION_NAME,
-        embedding_dim=embedding_dim,
+        embedding_function=embedding_function,
         drop_if_exists=False
     )
     
-    return encoder, llm, collection
+    llm = get_llm_client()
+    
+    return llm, collection
 
 
 # Initialize clients
 try:
-    encoder_client, llm_client, collection = init_clients()
+    llm_client, collection = init_clients()
 except Exception as e:
     st.error(f"❌ Failed to initialize: {e}")
     st.stop()
@@ -97,28 +94,27 @@ if st.button("Submit", type="primary", use_container_width=True):
         st.warning("⚠️ Please enter a question.")
     else:
         try:
-            # Search for relevant documents
+            # Search for relevant documents using collection.query()
             with st.spinner("🔍 Searching relevant documents..."):
-                query_embedding = emb_text(encoder_client, question)
-                search_results = search_similar_embeddings(
-                    collection, 
-                    query_embedding, 
-                    limit=3
+                results = collection.query(
+                    query_texts=[question],
+                    n_results=3,
+                    include=["documents", "metadatas", "distances"]
                 )
 
-            if not search_results:
+            if not results or not results.get("ids") or not results["ids"][0]:
                 st.warning("No relevant documents found. Try a different question.")
                 st.session_state.results = []
             else:
                 # Store results
                 st.session_state.results = [
                     {
-                        'text': text,
-                        'similarity': similarity,
-                        'source': source_file,
-                        'distance': distance
+                        'text': results["documents"][0][i],
+                        'similarity': 1.0 / (1.0 + results["distances"][0][i]),
+                        'source': results["metadatas"][0][i].get('source_file', '') if results["metadatas"][0][i] else '',
+                        'distance': results["distances"][0][i]
                     }
-                    for text, similarity, source_file, distance in search_results
+                    for i in range(len(results["ids"][0]))
                 ]
                 
                 # Generate answer
