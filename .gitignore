@@ -1,4 +1,0 @@
-.env
-__pycache__/
-RAG_SEARCH_WITH_SEEKDB/seekdb_rag/
-RAG_SEARCH_WITH_SEEKDB/seekdb_docs/
