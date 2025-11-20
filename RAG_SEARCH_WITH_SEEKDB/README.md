@@ -41,10 +41,10 @@ cp .env.example .env
 ```env
 OPENAI_API_KEY=sk-your-dashscope-key
 OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-LLM_MODEL=qwen-plus
+OPENAI_MODEL_NAME=qwen-plus
 SEEKDB_DIR=./seekdb_rag
 SEEKDB_NAME=test
-TABLE_NAME=embeddings
+COLLECTION_NAME=embeddings
 ```
 
 **环境变量说明：**
@@ -53,10 +53,10 @@ TABLE_NAME=embeddings
 |------------------|------------------------------------------------|--------------------------------------------------|
 | OPENAI_API_KEY   | LLM API Key（支持 OpenAI、通义千问等兼容服务） | 必须设置                                         |
 | OPENAI_BASE_URL  | LLM API 基础 URL                               | https://dashscope.aliyuncs.com/compatible-mode/v1 |
-| LLM_MODEL        | 语言模型名称                                   | qwen-plus                                        |
+| OPENAI_MODEL_NAME        | 语言模型名称                                   | qwen-plus                                        |
 | SEEKDB_DIR       | SeekDB 数据库目录                              | ./seekdb_rag                                     |
 | SEEKDB_NAME      | 数据库名称                                     | test                                             |
-| TABLE_NAME       | 嵌入表名称                                     | embeddings                                       |
+| COLLECTION_NAME       | 嵌入表名称                                     | embeddings                                       |
 
 > **说明：** Embedding 模型使用 pyseekdb 自带的 `DefaultEmbeddingFunction`（基于 sentence-transformers，384维），首次使用会自动下载模型，无需配置 API Key。
 

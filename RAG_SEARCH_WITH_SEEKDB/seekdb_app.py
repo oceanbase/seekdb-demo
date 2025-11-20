@@ -1,16 +1,13 @@
 import os
 import streamlit as st
 from dotenv import load_dotenv
-
-from pyseekdb import DefaultEmbeddingFunction
+from embedding_function_factory import create_embedding_function
 from seekdb_utils import (
     get_seekdb_client, 
-    get_collection, 
     get_database_stats
 )
 from llm import get_llm_answer, get_llm_client
 
-load_dotenv()
 
 # Page config
 st.set_page_config(
@@ -22,20 +19,16 @@ st.set_page_config(
 # Configuration
 DB_DIR = os.getenv("SEEKDB_DIR", "./seekdb_rag")
 DB_NAME = os.getenv("SEEKDB_NAME", "test")
-COLLECTION_NAME = os.getenv("COLLECTION_NAME") or os.getenv("TABLE_NAME", "embeddings")
-
+COLLECTION_NAME = os.getenv("COLLECTION_NAME")
 
 @st.cache_resource
 def init_clients():
     """Initialize and cache all clients."""
-    embedding_function = DefaultEmbeddingFunction()
     seekdb_client = get_seekdb_client(db_dir=DB_DIR, db_name=DB_NAME)
     
-    collection = get_collection(
-        seekdb_client,
-        collection_name=COLLECTION_NAME,
-        embedding_function=embedding_function,
-        drop_if_exists=False
+    collection = seekdb_client.get_collection(
+        name=COLLECTION_NAME,
+        embedding_function=create_embedding_function()
     )
     
     llm = get_llm_client()

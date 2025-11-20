@@ -7,7 +7,7 @@ def get_llm_client() -> OpenAI:
     """Initialize LLM client using OpenAI-compatible API."""
     return OpenAI(
         api_key=os.getenv("OPENAI_API_KEY"),
-        base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+        base_url=os.getenv("OPENAI_BASE_URL"),
     )
 
 
@@ -34,7 +34,7 @@ def get_llm_answer(
         Generated answer as string
     """
     if model is None:
-        model = os.getenv("LLM_MODEL", "gpt-3.5-turbo")
+        model = os.getenv("OPENAI_MODEL_NAME")
     
     # Define system and user prompts
     SYSTEM_PROMPT = """
@@ -95,7 +95,7 @@ def get_llm_summary(client: OpenAI, text: str, model: str = None) -> str:
         Summary as string
     """
     if model is None:
-        model = os.getenv("LLM_MODEL", "gpt-3.5-turbo")
+        model = os.getenv("OPENAI_MODEL_NAME")
     
     SYSTEM_PROMPT = """
     You are a professional text summarization assistant. Please generate concise and accurate summaries for user-provided text.

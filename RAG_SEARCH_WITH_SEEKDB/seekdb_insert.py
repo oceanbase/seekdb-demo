@@ -4,8 +4,8 @@ from glob import glob
 from tqdm import tqdm
 from typing import Dict, List, Iterator
 
-from pyseekdb import DefaultEmbeddingFunction
-from seekdb_utils import get_seekdb_client, get_collection, insert_embeddings
+from embedding_function_factory import create_embedding_function
+from seekdb_utils import get_seekdb_client, get_seekdb_collection, insert_embeddings
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -66,23 +66,21 @@ def process_and_insert_data(
     """Process text data and insert into SeekDB using local embedding model."""
     # Read from environment variables if not provided
     if db_dir is None:
-        db_dir = os.getenv("SEEKDB_DIR", "./seekdb_rag")
+        db_dir = os.getenv("SEEKDB_DIR")
     if db_name is None:
-        db_name = os.getenv("SEEKDB_NAME", "test")
+        db_name = os.getenv("SEEKDB_NAME")
     if collection_name is None:
-        collection_name = os.getenv("COLLECTION_NAME") or os.getenv("TABLE_NAME", "embeddings")
+        collection_name = os.getenv("COLLECTION_NAME")
     
     # Initialize clients
     print("Initializing clients...")
-    print("Using local embedding model (DefaultEmbeddingFunction, 384 dimensions)...")
-    embedding_function = DefaultEmbeddingFunction()
     seekdb_client = get_seekdb_client(db_dir=db_dir, db_name=db_name)
     
     # Create collection with embedding function
-    collection = get_collection(
+    collection = get_seekdb_collection(
         seekdb_client, 
         collection_name=collection_name, 
-        embedding_function=embedding_function,
+        embedding_function=create_embedding_function(),
         drop_if_exists=True
     )
     

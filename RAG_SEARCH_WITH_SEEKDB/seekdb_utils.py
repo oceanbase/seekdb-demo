@@ -1,7 +1,6 @@
 import pyseekdb
-from pyseekdb import HNSWConfiguration, EmbeddingFunction
+from pyseekdb import DefaultEmbeddingFunction, EmbeddingFunction
 from typing import List, Dict, Any, Optional
-
 # Simple cache
 _client_cache = {}
 
@@ -16,8 +15,8 @@ def get_seekdb_client(db_dir: str = "./seekdb_rag", db_name: str = "test"):
     return _client_cache[cache_key]
 
 
-def get_collection(client, collection_name: str = "embeddings", 
-                  embedding_function: Optional[EmbeddingFunction] = None,
+def get_seekdb_collection(client, collection_name: str = "embeddings", 
+                  embedding_function: Optional[EmbeddingFunction] = DefaultEmbeddingFunction(),
                   drop_if_exists: bool = True):
     """
     Get or create a collection using pyseekdb's get_or_create_collection.
@@ -38,17 +37,13 @@ def get_collection(client, collection_name: str = "embeddings",
     if embedding_function is None:
         raise ValueError("embedding_function is required")
     
-    # Create HNSW configuration with embedding function's dimension
-    config = HNSWConfiguration(dimension=embedding_function.dimension, distance='l2')
-    
     # Use pyseekdb's native get_or_create_collection
     collection = client.get_or_create_collection(
         name=collection_name,
-        configuration=config,
         embedding_function=embedding_function
     )
     
-    print(f"Collection '{collection_name}' ready (dimension: {embedding_function.dimension})")
+    print(f"Collection '{collection_name}' ready!")
     return collection
 
 
@@ -63,14 +58,11 @@ def insert_embeddings(collection, data: List[Dict[str, Any]]):
     try:
         ids = [f"{item['source_file']}_{item.get('chunk_index', 0)}" for item in data]
         documents = [item['text'] for item in data]
-        metadatas = [{'source_file': item['source_file'], 
-                     'chunk_index': item.get('chunk_index', 0)} for item in data]
         
         # Collection's embedding_function will automatically generate embeddings from documents
         collection.add(
             ids=ids,
-            documents=documents,
-            metadatas=metadatas
+            documents=documents
         )
         
         print(f"Inserted {len(data)} items successfully")

@@ -1,5 +1,5 @@
-from pyseekdb import EmbeddingFunction, Client
-from typing import Union, List
+from pyseekdb import EmbeddingFunction, DefaultEmbeddingFunction
+from typing import List, Union
 import os
 from openai import OpenAI
 
@@ -19,8 +19,8 @@ class SentenceTransformerCustomEmbeddingFunction(EmbeddingFunction[Documents]):
             model_name: Name of the sentence-transformers model to use
             device: Device to run the model on ('cpu' or 'cuda')
         """
-        self.model_name = os.environ.get('SENTENCE_TRANSFORMERS_MODEL_NAME')
-        self.device = os.environ.get('SENTENCE_TRANSFORMERS_DEVICE')
+        self.model_name = model_name or os.environ.get('SENTENCE_TRANSFORMERS_MODEL_NAME')
+        self.device = device or os.environ.get('SENTENCE_TRANSFORMERS_DEVICE')
         self._model = None
         self._dimension = None
     
@@ -79,27 +79,27 @@ class SentenceTransformerCustomEmbeddingFunction(EmbeddingFunction[Documents]):
 
 class OpenAIEmbeddingFunction(EmbeddingFunction[Documents]):
     """
-    A custom embedding function using OpenAI's embedding API.
+    A custom embedding function using Embedding API.
     """
     
     def __init__(self, model_name: str = "", api_key: str = "", base_url: str = ""):
         """
-        Initialize the OpenAI embedding function.
+        Initialize the Embedding API embedding function.
         
         Args:
-            model_name: Name of the OpenAI embedding model
-            api_key: OpenAI API key (if not provided, uses OPENAI_API_KEY env var)
+            model_name: Name of the Embedding API embedding model
+            api_key: Embedding API key (if not provided, uses EMBEDDING_API_KEY env var)
         """
-        self.model_name = os.environ.get('OPENAI_MODEL_NAME')
-        self.api_key = os.environ.get('OPENAI_API_KEY')
-        self.base_url = os.environ.get('OPENAI_BASE_URL')
+        self.model_name = model_name or os.environ.get('EMBEDDING_MODEL_NAME')
+        self.api_key = api_key or os.environ.get('EMBEDDING_API_KEY')
+        self.base_url = base_url or os.environ.get('EMBEDDING_BASE_URL')
         self._dimension = None
         if not self.api_key:
-            raise ValueError("OpenAI API key is required")
+            raise ValueError("Embedding API key is required")
 
 
     def _ensure_model_loaded(self):
-        """Lazy load the OpenAI model"""
+        """Lazy load the Embedding API model"""
         try:
             client = OpenAI(
                 api_key=self.api_key,
@@ -111,7 +111,7 @@ class OpenAIEmbeddingFunction(EmbeddingFunction[Documents]):
             )
             self._dimension = len(response.data[0].embedding)
         except Exception as e:
-            raise ValueError(f"Failed to load OpenAI model: {e}")
+            raise ValueError(f"Failed to load Embedding API model: {e}")
 
     @property
     def dimension(self) -> int:
@@ -121,7 +121,7 @@ class OpenAIEmbeddingFunction(EmbeddingFunction[Documents]):
     
     def __call__(self, input: Documents) -> Embeddings:
         """
-        Generate embeddings using OpenAI API.
+        Generate embeddings using Embedding API.
         
         Args:
             input: Single document (str) or list of documents (List[str])
@@ -137,17 +137,17 @@ class OpenAIEmbeddingFunction(EmbeddingFunction[Documents]):
         if not input:
             return []
         
-        # Call OpenAI API
+        # Call Embedding API
         client = OpenAI(
             api_key=self.api_key,  
-            base_url="" # TODO: your own base url
+            base_url=self.base_url
         )
         response = client.embeddings.create(
             model=self.model_name,
             input=input
         )
         
-        # Extract embeddings
+        # Extract Embedding API embeddings
         embeddings = [item.embedding for item in response.data]
         return embeddings
 
@@ -155,10 +155,13 @@ class OpenAIEmbeddingFunction(EmbeddingFunction[Documents]):
 def create_embedding_function() -> EmbeddingFunction:
     embedding_function_type = os.environ.get('EMBEDDING_FUNCTION_TYPE')
     if embedding_function_type == "api":
+        print("Using OpenAI Embedding API embedding function")
         return OpenAIEmbeddingFunction()
     elif embedding_function_type == "local":
+        print("Using SentenceTransformer embedding function")
         return SentenceTransformerCustomEmbeddingFunction()
     elif embedding_function_type == "default":
-        return SentenceTransformerCustomEmbeddingFunction()
+        print("Using Default embedding function")
+        return DefaultEmbeddingFunction()
     else:
         raise ValueError(f"Unsupported embedding function type: {embedding_function_type}")
