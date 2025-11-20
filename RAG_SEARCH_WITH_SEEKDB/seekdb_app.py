@@ -8,7 +8,7 @@ from seekdb_utils import (
 )
 from llm import get_llm_answer, get_llm_client
 
-
+load_dotenv()
 # Page config
 st.set_page_config(
     page_title="SeekDB RAG Demo",
